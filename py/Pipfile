@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+tensorforce = "*"
+jpype1 = "*"
+stable-baselines3 = "*"
+keras = "==2.6.0"
+pyglet = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"
