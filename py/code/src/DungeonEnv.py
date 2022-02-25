@@ -30,7 +30,7 @@ class DungeonEnv(gym.Env):
         self.dungeon           = dungeon
         self.action_space      = gym.spaces.Discrete(n_actions)
         self.observation_space = self._getObservationSpace(dungeon)
-        self.position          = self.level.getStartTile().getGlobalPosition().toPoint()
+        self.position          = self.dungeon.getStartTile().getGlobalPosition().toPoint()
         self.goal              = self.dungeon.getEndTile().getGlobalPosition().toPoint()
         self.step_size         = 1
  
@@ -41,7 +41,7 @@ class DungeonEnv(gym.Env):
         """
 
         # Reset to initial position
-        self.position = self.level.getStartTile().getGlobalPosition().toPoint()
+        self.position = self.dungeon.getStartTile().getGlobalPosition().toPoint()
 
         return np.array([self.position.x, self.position.y]).astype(np.float32)
  
@@ -64,7 +64,7 @@ class DungeonEnv(gym.Env):
         new_position = Point(self.position.x + dx, self.position.y + dy)
 
         # Perform movement if new position is accessible
-        if (self.level.getTileAt(new_position.toCoordinate()).isAccessible()):
+        if (self.dungeon.getTileAt(new_position.toCoordinate()).isAccessible()):
             self.position = new_position
 
         # Check if goal position has been reached
@@ -82,7 +82,7 @@ class DungeonEnv(gym.Env):
         return observation, reward, done, info
 
     def _getObservationSpace(self, dungeon: Level):
-        tiles = [tile for room in self.level.getRooms() for sub_list in room.getLayout() for tile in sub_list]
+        tiles = [tile for room in self.dungeon.getRooms() for sub_list in room.getLayout() for tile in sub_list]
         positions = [(p.x, p.y) for p in [tile.getGlobalPosition().toPoint() for tile in tiles]]
         limits =  np.array(list(map(min, zip(*positions)))), np.array(list(map(max, zip(*positions))))
         return gym.spaces.Box(limits[0], limits[1])
