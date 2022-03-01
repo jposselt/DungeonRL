@@ -1,16 +1,18 @@
 package desktop;
 
+import actor.RandomNPC;
+import behavior.RandomBehavior;
 import controller.MainController;
 import level.LevelAPI;
 import level.generator.dummy.DummyGenerator;
 import level.generator.dungeong.graphg.NoSolutionException;
 
 public class Game extends MainController {
+    private RandomNPC npc;
 
     @Override
     public void onLevelLoad() {
-        // TODO Auto-generated method stub
-        
+        npc.setLevel(levelAPI.getCurrentLevel());
     }
 
     @Override
@@ -30,8 +32,10 @@ public class Game extends MainController {
         generator = new DummyGenerator();
         levelAPI = new LevelAPI(batch, painter, generator, this);
 
-        //entityController.add(hero);
-        //camera.follow();
+        final String texture = "character/monster/chort_idle_anim_f0.png";
+        npc = new RandomNPC(batch, painter, texture, new RandomBehavior(4));
+        entityController.add(npc);
+        camera.follow(npc);
 
         try {
             levelAPI.loadLevel();
