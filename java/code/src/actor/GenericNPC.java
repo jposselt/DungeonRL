@@ -4,6 +4,7 @@ import behavior.IBehavior;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import graphic.Painter;
 import interfaces.IEntity;
+import level.elements.Level;
 import tools.Point;
 
 public class GenericNPC<I,O> implements IEntity {
@@ -11,6 +12,7 @@ public class GenericNPC<I,O> implements IEntity {
     private Painter painter;
     private String texture;
     private Point position;
+    private Level level;
     private IBehavior<I,O> behavior;
 
     public GenericNPC(SpriteBatch batch, Painter painter, String texture, IBehavior<I,O> behavior){
@@ -56,5 +58,14 @@ public class GenericNPC<I,O> implements IEntity {
 
     public void setPostion(Point p) {
         position = p;
+    }
+
+    public void setLevel(Level level) {
+        this.level = level;
+        this.position = level.getStartTile().getGlobalPosition().toPoint();
+    }
+
+    public Level getLevel() {
+        return level;
     }
 }
