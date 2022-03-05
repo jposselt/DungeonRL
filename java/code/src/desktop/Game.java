@@ -1,14 +1,18 @@
 package desktop;
 
 import actor.RandomNPC;
+import actor.TestNPC;
+import behavior.IBehavior;
 import behavior.RandomBehavior;
+import behavior.TFModel;
 import controller.MainController;
 import level.LevelAPI;
 import level.generator.dummy.DummyGenerator;
 import level.generator.dungeong.graphg.NoSolutionException;
+import tools.Point;
 
 public class Game extends MainController {
-    private RandomNPC npc;
+    private TestNPC npc;
 
     @Override
     public void onLevelLoad() {
@@ -33,7 +37,10 @@ public class Game extends MainController {
         levelAPI = new LevelAPI(batch, painter, generator, this);
 
         final String texture = "character/monster/chort_idle_anim_f0.png";
-        npc = new RandomNPC(batch, painter, texture, new RandomBehavior(4));
+        final String modelDir = "D:\\Repos\\DungeonRL\\py\\code\\model-tf\\agent-200";
+        IBehavior<Point, Integer> behavior = new TFModel(modelDir);
+        npc = new TestNPC(batch, painter, texture, behavior);
+
         entityController.add(npc);
         camera.follow(npc);
 
