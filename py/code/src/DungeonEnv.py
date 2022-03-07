@@ -13,6 +13,7 @@ jpype.startJVM(
 )
 
 import gym
+import random
 import numpy as np
 
 from tools import Point
@@ -41,7 +42,17 @@ class DungeonEnv(gym.Env):
         """
 
         # Reset to initial position
-        self.position = self.dungeon.getStartTile().getGlobalPosition().toPoint()
+        #self.position = self.dungeon.getStartTile().getGlobalPosition().toPoint()
+        
+        # Choose random tile (must be accessible and not be the goal tile)
+        tiles = [
+            tile
+            for room in self.dungeon.getRooms()
+            for sub_list in room.getLayout()
+            for tile in sub_list
+            if tile.isAccessible() and not tile.getGlobalPosition().equals(self.goal.toCoordinate())
+        ]
+        self.position = random.choice(tiles).getGlobalPosition().toPoint()
 
         return np.array([self.position.x, self.position.y]).astype(np.float32)
  
