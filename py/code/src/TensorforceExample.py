@@ -13,12 +13,15 @@ def main():
         max_episode_timesteps=500
     )
 
+    agent_type = "dqn"
+    
     agent = Agent.create(
-        agent='ppo',
+        agent=agent_type,
         environment=environment,
         batch_size=10,
+        memory=10000,
         learning_rate=1e-3,
-        #summarizer=dict(directory='summaries/tensorforce', summaries='all')
+        #summarizer=dict(directory='../../summaries/tf', filename=agent_type, summaries='all')
     )
 
     runner = Runner(
@@ -29,8 +32,7 @@ def main():
 
     runner.run(num_episodes=200)
     
-    #agent.save(directory='model-numpy', format='numpy', append='episodes')
-    agent.save(directory='model-tf', format='saved-model', append='episodes')
+    agent.save(directory='../../models/tf', filename=agent_type, format='saved-model', append='episodes')
     
     runner.close()
     agent.close()
