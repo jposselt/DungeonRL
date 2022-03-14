@@ -11,7 +11,7 @@ public final class Launcher {
         LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
         config.width = Constants.WINDOW_WIDTH;
         config.height = Constants.WINDOW_HEIGHT;
-        config.foregroundFPS = Constants.FRAME_RATE;
+        config.foregroundFPS = 3;
         new LwjglApplication(new LibgdxSetup(mc), config);
     }
 }

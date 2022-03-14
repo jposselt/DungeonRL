@@ -37,7 +37,7 @@ public class Game extends MainController {
         levelAPI = new LevelAPI(batch, painter, generator, this);
 
         final String texture = "character/monster/chort_idle_anim_f0.png";
-        final String modelDir = "D:\\Repos\\DungeonRL\\py\\code\\model-tf\\agent-200";
+        final String modelDir = "D:\\Repos\\DungeonRL\\models\\tf\\ppo-200";
         IBehavior<Point, Integer> behavior = new TFModel(modelDir);
         npc = new TestNPC(batch, painter, texture, behavior);
 
