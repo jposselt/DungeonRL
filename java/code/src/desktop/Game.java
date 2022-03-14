@@ -1,13 +1,10 @@
 package desktop;
 
-import actor.RandomNPC;
 import actor.TestNPC;
 import behavior.IBehavior;
-import behavior.RandomBehavior;
 import behavior.TFModel;
 import controller.MainController;
-import level.LevelAPI;
-import level.generator.dummy.DummyGenerator;
+import level.generator.LevelLoader.LevelLoader;
 import level.generator.dungeong.graphg.NoSolutionException;
 import tools.Point;
 
@@ -27,17 +24,17 @@ public class Game extends MainController {
 
     @Override
     protected void endFrame() {
-        // TODO Auto-generated method stub
-        
+        //if (npc.getPosition().toCoordinate().equals(levelAPI.getCurrentLevel().getEndTile().getGlobalPosition())) {
+            //TODO: move npc to a random accessible position
+        //}
     }
 
     @Override
     protected void setup() {
-        generator = new DummyGenerator();
-        levelAPI = new LevelAPI(batch, painter, generator, this);
+        levelAPI.setGenerator(new LevelLoader());
 
         final String texture = "character/monster/chort_idle_anim_f0.png";
-        final String modelDir = "D:\\Repos\\DungeonRL\\models\\tf\\ppo-200";
+        final String modelDir = "D:\\Repos\\DungeonRL\\models\\tf\\ppo-1000";
         IBehavior<Point, Integer> behavior = new TFModel(modelDir);
         npc = new TestNPC(batch, painter, texture, behavior);
 
