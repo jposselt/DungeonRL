@@ -6,9 +6,10 @@ from jpype.types import *
 lib_dir = '../lib/'
 jpype.startJVM(
     classpath = [
-        lib_dir + 'dungeon/core-1.0.9.jar',
+        lib_dir + 'dungeon/code-2.0.0.jar',
         lib_dir + 'gdx/gdx-1.10.0.jar',
         lib_dir + 'gdx/gdx-ai-1.8.2.jar',
+        lib_dir + 'google/gson-2.9.0.jar',
     ]
 )
 
@@ -40,9 +41,6 @@ class DungeonEnv(gym.Env):
         Important: the observation must be a numpy array
         :return: (np.array)
         """
-
-        # Reset to initial position
-        #self.position = self.dungeon.getStartTile().getGlobalPosition().toPoint()
         
         # Choose random tile (must be accessible and not be the goal tile)
         tiles = [
