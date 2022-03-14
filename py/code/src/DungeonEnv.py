@@ -32,8 +32,15 @@ class DungeonEnv(gym.Env):
         self.dungeon           = dungeon
         self.action_space      = gym.spaces.Discrete(n_actions)
         self.observation_space = self._getObservationSpace(dungeon)
-        self.position          = self.dungeon.getStartTile().getGlobalPosition().toPoint()
         self.goal              = self.dungeon.getEndTile().getGlobalPosition().toPoint()
+        self.start_tiles       = [
+            tile
+            for room in self.dungeon.getRooms()
+            for sub_list in room.getLayout()
+            for tile in sub_list
+            if tile.isAccessible() and not tile.getGlobalPosition().equals(self.goal.toCoordinate())
+        ]
+        self.position          = random.choice(self.start_tiles).getGlobalPosition().toPoint()
         self.step_size         = 1
  
     def reset(self):
@@ -43,14 +50,7 @@ class DungeonEnv(gym.Env):
         """
         
         # Choose random tile (must be accessible and not be the goal tile)
-        tiles = [
-            tile
-            for room in self.dungeon.getRooms()
-            for sub_list in room.getLayout()
-            for tile in sub_list
-            if tile.isAccessible() and not tile.getGlobalPosition().equals(self.goal.toCoordinate())
-        ]
-        self.position = random.choice(tiles).getGlobalPosition().toPoint()
+        self.position = random.choice(self.start_tiles).getGlobalPosition().toPoint()
 
         return np.array([self.position.x, self.position.y]).astype(np.float32)
  
