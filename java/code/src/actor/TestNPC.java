@@ -19,8 +19,8 @@ public class TestNPC extends GenericNPC<Point, Integer>{
         int action = getBehavior().nextAction(this.getPosition());
         if (action == 0) newPosition.y += movementSpeed;
         if (action == 1) newPosition.y -= movementSpeed;
-        if (action == 2) newPosition.x += movementSpeed;
-        if (action == 3) newPosition.x -= movementSpeed;
+        if (action == 2) newPosition.x -= movementSpeed;
+        if (action == 3) newPosition.x += movementSpeed;
         if(this.getLevel().getTileAt(newPosition.toCoordinate()).isAccessible()) {
             this.setPostion(newPosition);
         }
