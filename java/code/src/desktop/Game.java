@@ -3,10 +3,17 @@ package desktop;
 import actor.TestNPC;
 import behavior.IBehavior;
 import behavior.TFModel;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import controller.MainController;
+import level.elements.room.Room;
 import level.generator.LevelLoader.LevelLoader;
 import level.generator.dungeong.graphg.NoSolutionException;
 import tools.Point;
+
+import java.util.List;
+import java.util.Random;
+
 
 public class Game extends MainController {
     private TestNPC npc;
@@ -18,15 +25,23 @@ public class Game extends MainController {
 
     @Override
     protected void beginFrame() {
-        // TODO Auto-generated method stub
-        
+        if (Gdx.input.isKeyPressed(Input.Keys.R)) {
+            npc.setPostion(getRandomPosition());
+        }
     }
 
     @Override
     protected void endFrame() {
-        //if (npc.getPosition().toCoordinate().equals(levelAPI.getCurrentLevel().getEndTile().getGlobalPosition())) {
-            //TODO: move npc to a random accessible position
-        //}
+        if (npc.getPosition().toCoordinate().equals(levelAPI.getCurrentLevel().getEndTile().getGlobalPosition())) {
+            npc.setPostion(getRandomPosition());
+        }
+    }
+
+    protected Point getRandomPosition() {
+        Random rand = new Random();
+        List<Room> rooms = levelAPI.getCurrentLevel().getRooms();
+        Room room = rooms.get(rand.nextInt(rooms.size()));
+        return room.getRandomFloorTile().getGlobalPosition().toPoint();
     }
 
     @Override
