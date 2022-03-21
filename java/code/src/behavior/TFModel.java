@@ -12,14 +12,14 @@ public class TFModel implements IBehavior<Point, Integer> {
     }
 
     @Override
-    public Integer nextAction(Point state) throws IllegalArgumentException {
+    public Integer nextAction(Point state, boolean[] actionMask) throws IllegalArgumentException {
         final String inputOp  = "serving_default_args_0";
         final String maskOp   = "serving_default_mask";
         final String detOp    = "serving_default_deterministic";
         final String outputOp = "StatefulPartitionedCall";
 
         Tensor<Float> input           = Tensor.create(new float[][] {{state.x, state.y}}, Float.class);
-        Tensor<Boolean> mask          = Tensor.create(new boolean[][] {{true, true, true, true}}, Boolean.class);
+        Tensor<Boolean> mask          = Tensor.create(new boolean[][] {actionMask}, Boolean.class);
         Tensor<Boolean> deterministic = Tensor.create(true, Boolean.class);
 
         Tensor<?> result = this.session.runner()

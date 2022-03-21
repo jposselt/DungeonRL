@@ -49,7 +49,7 @@ public class Game extends MainController {
         levelAPI.setGenerator(new LevelLoader());
 
         final String texture = "character/monster/chort_idle_anim_f0.png";
-        final String modelDir = "D:\\Repos\\DungeonRL\\models\\tf\\ppo-1000";
+        final String modelDir = "D:\\Repos\\DungeonRL\\models\\tf\\masked\\ppo-10000";
         IBehavior<Point, Integer> behavior = new TFModel(modelDir);
         npc = new TestNPC(batch, painter, texture, behavior);
 

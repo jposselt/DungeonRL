@@ -11,20 +11,34 @@ public class TestNPC extends GenericNPC<Point, Integer>{
         super(batch, painter, texture, behavior);
     }
 
+    private Point nextPosition(int action) {
+        Point p = new Point(this.getPosition());
+        float movementSpeed = 1f;
+        if (action == 0) p.y += movementSpeed;
+        if (action == 1) p.y -= movementSpeed;
+        if (action == 2) p.x -= movementSpeed;
+        if (action == 3) p.x += movementSpeed;
+
+        return p;
+    }
+
+    private boolean isValidAction(int action) {
+        return this.getLevel().getTileAt(nextPosition(action).toCoordinate()).isAccessible();
+    }
+
+    private boolean[] getActionMask() {
+        return new boolean[] {
+                isValidAction(0),
+                isValidAction(1),
+                isValidAction(2),
+                isValidAction(3)
+        };
+    }
+
     @Override
     public void update() {
-        Point newPosition = new Point(this.getPosition());
-        float movementSpeed = 1f;
-
-        int action = getBehavior().nextAction(this.getPosition());
-        if (action == 0) newPosition.y += movementSpeed;
-        if (action == 1) newPosition.y -= movementSpeed;
-        if (action == 2) newPosition.x -= movementSpeed;
-        if (action == 3) newPosition.x += movementSpeed;
-        if(this.getLevel().getTileAt(newPosition.toCoordinate()).isAccessible()) {
-            this.setPostion(newPosition);
-        }
-
+        int action = getBehavior().nextAction(this.getPosition(), getActionMask());
+        this.setPostion(nextPosition(action));
         this.draw();
     }
 }
