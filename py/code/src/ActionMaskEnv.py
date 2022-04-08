@@ -131,9 +131,9 @@ if __name__ == '__main__':
     agentType     = 'ppo'
     topDir        = '../../'
     levelDir      = topDir + 'level/'
-    summaryDir    = topDir + 'summaries/tf/masked'
+    summaryDir    = topDir + 'summaries/tf/base'
     summaryName   = agentType
-    modelsDir     = topDir + 'models/tf/masked'
+    modelsDir     = topDir + 'models/tf/base'
     modelName     = agentType
     episodes      = 10000
     max_timesteps = 100
@@ -151,8 +151,7 @@ if __name__ == '__main__':
         batch_size=10,
         learning_rate=1e-3,
         exploration=0.1,
-        memory=10000,
-        summarizer=dict(directory=summaryDir, filename=agentType, summaries='all')
+        summarizer=dict(directory=summaryDir, filename=summaryName, summaries='all'),
     )
 
     runner = Runner(
@@ -163,7 +162,8 @@ if __name__ == '__main__':
 
     runner.run(num_episodes=episodes)
     
-    agent.save(directory=modelsDir, filename=modelName, format='saved-model', append='episodes')
+    agent.save(directory=modelsDir,          filename=modelName, format='saved-model', append='episodes')
+    agent.save(directory=modelsDir+'/numpy', filename=modelName, format='numpy',       append='episodes')
     
     runner.close()
     agent.close()

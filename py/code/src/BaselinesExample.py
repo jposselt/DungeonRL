@@ -1,25 +1,28 @@
-from stable_baselines3 import DQN, PPO, A2C
+from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from DungeonEnv import DungeonEnv
-from level.generator.dummy import DummyGenerator
+from level.generator.LevelLoader import LevelLoader
 
 def main():
-    env = DungeonEnv(DummyGenerator().getLevel(), 4)
+    topDir       = '../../'
+    levelDir     = topDir + 'level/'
+    summariesDir = topDir + 'summaries/baseline/'
+    modelsDir    = topDir + 'models/baseline/'
+    agentType    = "ppo"
+    timesteps    = 10_000
     
-    print(env.reset())
-    print(env.goal.x, env.goal.y)
+    environment = DungeonEnv(LevelLoader().loadLevel(levelDir + 'level0.json'), 4)
+    environment = make_vec_env(lambda: environment, n_envs=1)
     
-    env = make_vec_env(lambda: env, n_envs=1)
-    
-    model = A2C(
+    model = PPO(
         'MlpPolicy',
-        env,
+        environment,
         verbose=1,
-        #tensorboard_log="./summaries/baseline/"
+        tensorboard_log=summariesDir + agentType
     )
     
-    model.learn(total_timesteps=10_000)
-    model.save("model-bl")
+    model.learn(total_timesteps=timesteps)
+    model.save(modelsDir + agentType)
 
 if __name__ == '__main__':
     main()
