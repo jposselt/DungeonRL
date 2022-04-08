@@ -32,10 +32,10 @@ class DungeonEnv(gym.Env):
         self.dungeon           = dungeon
         self.action_space      = gym.spaces.Discrete(n_actions)
         self.observation_space = self._getObservationSpace(dungeon)
-        self.goal              = self.dungeon.getEndTile().getGlobalPosition().toPoint()
+        self.goal              = dungeon.getEndTile().getGlobalPosition().toPoint()
         self.start_tiles       = [
             tile
-            for room in self.dungeon.getRooms()
+            for room in dungeon.getRooms()
             for sub_list in room.getLayout()
             for tile in sub_list
             if tile.isAccessible() and not tile.getGlobalPosition().equals(self.goal.toCoordinate())
@@ -91,7 +91,7 @@ class DungeonEnv(gym.Env):
         return observation, reward, done, info
 
     def _getObservationSpace(self, dungeon: Level):
-        tiles = [tile for room in self.dungeon.getRooms() for sub_list in room.getLayout() for tile in sub_list]
+        tiles = [tile for room in dungeon.getRooms() for sub_list in room.getLayout() for tile in sub_list]
         positions = [(p.x, p.y) for p in [tile.getGlobalPosition().toPoint() for tile in tiles]]
         limits =  np.array(list(map(min, zip(*positions)))), np.array(list(map(max, zip(*positions))))
         return gym.spaces.Box(limits[0], limits[1])
