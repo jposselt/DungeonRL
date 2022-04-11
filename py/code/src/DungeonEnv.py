@@ -23,8 +23,18 @@ from level.elements.room import Room
 from level.elements.room import Tile
 
 class DungeonEnv(gym.Env):
+    """An OpenAI Gym compatible environment for navigating in a dungeon with RF learning
+    """
     def __init__(self, dungeon: Level, n_actions: int):
+        """Initialize the environment
 
+        Args:
+            dungeon (Level): the dungeon
+            n_actions (int): number of possible actions
+
+        Raises:
+            ValueError: raised if given number of actions is invalid (<1)
+        """
         if n_actions <= 0:
             raise ValueError('Number of action cannot be less than 1. Given value %d' % (n_actions))
 
@@ -44,17 +54,29 @@ class DungeonEnv(gym.Env):
         self.step_size         = 1
  
     def reset(self):
-        """
+        """Reset the environment
         Important: the observation must be a numpy array
-        :return: (np.array)
-        """
         
+        Returns:
+            np.array: initial state after reset
+        """
         # Choose random tile (must be accessible and not be the goal tile)
         self.position = random.choice(self.start_tiles).getGlobalPosition().toPoint()
 
         return np.array([self.position.x, self.position.y]).astype(np.float32)
  
     def step(self, action):
+        """Perform an action in the environment
+
+        Args:
+            action (int): code for the action to perform
+
+        Raises:
+            ValueError: raised if given action code is unknown
+
+        Returns:
+            np.array, int, bool, dict: Resulting state, reward, termination indicator and additional information
+        """
         if not self.action_space.contains(action):
             raise ValueError("Received invalid action={} which is not part of the action space".format(action))
 
@@ -91,6 +113,14 @@ class DungeonEnv(gym.Env):
         return observation, reward, done, info
 
     def _getObservationSpace(self, dungeon: Level):
+        """Calculate the observation space for a given dungeon object
+
+        Args:
+            dungeon (Level): the dungeon
+
+        Returns:
+            gym.space: bounded state space
+        """
         tiles = [tile for room in dungeon.getRooms() for sub_list in room.getLayout() for tile in sub_list]
         positions = [(p.x, p.y) for p in [tile.getGlobalPosition().toPoint() for tile in tiles]]
         limits =  np.array(list(map(min, zip(*positions)))), np.array(list(map(max, zip(*positions))))
