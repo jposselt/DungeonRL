@@ -1,26 +1,7 @@
-import jpype
-import jpype.imports
-from jpype.types import *
- 
-# launch the JVM
-lib_dir = '../lib/'
-jpype.startJVM(
-    classpath = [
-        lib_dir + 'dungeon/code-2.0.0.jar',
-        lib_dir + 'gdx/gdx-1.10.0.jar',
-        lib_dir + 'gdx/gdx-ai-1.8.2.jar',
-        lib_dir + 'google/gson-2.9.0.jar',
-    ]
-)
-
 import random
 import numpy as np
 from tensorforce import Environment
-
-from tools import Point
-from level.elements import Level
-from level.elements.room import Room
-from level.elements.room import Tile
+from JavaDungeon import Point, Level
 
 class ActionMaskEnv(Environment):
     def __init__(self, dungeon: Level):
@@ -121,12 +102,12 @@ class ActionMaskEnv(Environment):
             self.dungeon.getTileAt(Point(p.x + self.step_size, p.y).toCoordinate()).isAccessible()
         ])
 
+
 if __name__ == '__main__':
     from tensorforce.environments import Environment
     from tensorforce.agents import Agent
     from tensorforce.execution import Runner
-    
-    from level.generator.LevelLoader import LevelLoader
+    from JavaDungeon import LevelLoader
     
     agentType     = 'ppo'
     topDir        = '../../'
