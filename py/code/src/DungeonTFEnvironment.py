@@ -4,7 +4,15 @@ from tensorforce import Environment
 from JavaDungeon import Point, Level
 
 class DungeonTFEnvironment(Environment):
+    """An RF learning environment based on the Tensorforce environment interface. Similar to DungeonGymEnvironment
+    but extended with action masking.
+    """
     def __init__(self, dungeon: Level):
+        """Initialize the environment
+
+        Args:
+            dungeon (Level): the dungeon
+        """
         super().__init__()
         
         # Dungeon level (java class)
@@ -30,6 +38,11 @@ class DungeonTFEnvironment(Environment):
 
 
     def states(self):
+        """Returns the state space specification.
+
+        Returns:
+            specification: Arbitrarily nested dictionary of state descriptions. See base class for more information.
+        """
         return dict(
             type=float,
             shape=tuple(self._state_indices.shape),
@@ -39,10 +52,21 @@ class DungeonTFEnvironment(Environment):
 
 
     def actions(self):
+        """Returns the action space specification.
+        
+        Returns:
+            specification: Arbitrarily nested dictionary of action descriptions. See base class for more information.
+        """
         return dict(type=int, num_values=4)
 
 
     def reset(self):
+        """Resets the environment to start a new episode.
+
+        Returns:
+            dict[state, action_mask]: Dictionary containing initial state(s) and action mask. See "getActionMask" method
+            for meaning of the mask.
+        """
         # Initial state and associated action mask
         start = random.choice(self.start_coords)
         self.state = np.array([start.x, start.y]).astype(np.float32)
@@ -55,6 +79,16 @@ class DungeonTFEnvironment(Environment):
 
 
     def execute(self, actions):
+        """Executes the given action(s) and advances the environment by one step.
+
+        Args:
+            actions (dict[action]): Dictionary containing action(s) to be executed
+
+        Returns:
+            dict[state, action_mask], bool | 0 | 1 | 2, float: Dictionary containing next state(s)
+            and action mask, whether a terminal state is reached or 2 if the episode was
+            aborted and observed reward.
+        """
         # Compute next state and associated action mask
         if actions == 0:
             self.state[1] += self.step_size
@@ -78,6 +112,14 @@ class DungeonTFEnvironment(Environment):
 
 
     def getStateBounds(self, dungeon: Level):
+        """Returns the boundaries of the state space
+
+        Args:
+            dungeon (Level): the dungeon
+
+        Returns:
+            array[[x_min, y_min],[x_max, y_max]]: Array containing minimum and maximum values of the 2D state space.
+        """
         # Get all accessible tiles
         accessible_tiles = [tile for room in dungeon.getRooms() for sub_list in room.getLayout() for tile in sub_list if tile.isAccessible()]
         
@@ -95,6 +137,14 @@ class DungeonTFEnvironment(Environment):
 
 
     def getActionMask(self, p: Point):
+        """Return array possible actions
+
+        Args:
+            p (Point): Current state from which an action is to be taken
+
+        Returns:
+            array: Array of booleans indicating which action are possible (true=action is possible, false=action is not possible).
+        """
         return np.asarray([
             self.dungeon.getTileAt(Point(p.x, p.y + self.step_size).toCoordinate()).isAccessible(),
             self.dungeon.getTileAt(Point(p.x, p.y - self.step_size).toCoordinate()).isAccessible(),
