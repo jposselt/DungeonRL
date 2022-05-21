@@ -3,7 +3,7 @@ import random
 import numpy as np
 from JavaDungeon import Point, Level
 
-class DungeonEnv(gym.Env):
+class DungeonGymEnvironment(gym.Env):
     """An OpenAI Gym compatible environment for navigating in a dungeon with RF learning
     """
     def __init__(self, dungeon: Level, n_actions: int):
@@ -19,7 +19,7 @@ class DungeonEnv(gym.Env):
         if n_actions <= 0:
             raise ValueError('Number of action cannot be less than 1. Given value %d' % (n_actions))
 
-        super(DungeonEnv, self).__init__()
+        super(DungeonGymEnvironment, self).__init__()
         self.dungeon           = dungeon
         self.action_space      = gym.spaces.Discrete(n_actions)
         self.observation_space = self._getObservationSpace(dungeon)

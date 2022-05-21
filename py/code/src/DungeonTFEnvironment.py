@@ -3,7 +3,7 @@ import numpy as np
 from tensorforce import Environment
 from JavaDungeon import Point, Level
 
-class ActionMaskEnv(Environment):
+class DungeonTFEnvironment(Environment):
     def __init__(self, dungeon: Level):
         super().__init__()
         
@@ -101,51 +101,3 @@ class ActionMaskEnv(Environment):
             self.dungeon.getTileAt(Point(p.x - self.step_size, p.y).toCoordinate()).isAccessible(),
             self.dungeon.getTileAt(Point(p.x + self.step_size, p.y).toCoordinate()).isAccessible()
         ])
-
-
-if __name__ == '__main__':
-    from tensorforce.environments import Environment
-    from tensorforce.agents import Agent
-    from tensorforce.execution import Runner
-    from JavaDungeon import LevelLoader
-    
-    agentType     = 'ppo'
-    topDir        = '../../'
-    levelDir      = topDir + 'level/'
-    summaryDir    = topDir + 'summaries/tf/base'
-    summaryName   = agentType
-    modelsDir     = topDir + 'models/tf/base'
-    modelName     = agentType
-    episodes      = 10000
-    max_timesteps = 100
-
-    env = ActionMaskEnv(LevelLoader().loadLevel(levelDir + 'level0.json'))
-    
-    environment = Environment.create(
-        environment=env,
-        max_episode_timesteps=max_timesteps
-    )
-
-    agent = Agent.create(
-        agent=agentType,
-        environment=environment,
-        batch_size=10,
-        learning_rate=1e-3,
-        exploration=0.1,
-        summarizer=dict(directory=summaryDir, filename=summaryName, summaries='all'),
-    )
-
-    runner = Runner(
-        agent=agent,
-        environment=environment,
-        max_episode_timesteps=max_timesteps
-    )
-
-    runner.run(num_episodes=episodes)
-    
-    agent.save(directory=modelsDir,          filename=modelName, format='saved-model', append='episodes')
-    agent.save(directory=modelsDir+'/numpy', filename=modelName, format='numpy',       append='episodes')
-    
-    runner.close()
-    agent.close()
-    environment.close()
