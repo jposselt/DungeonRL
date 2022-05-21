@@ -4,48 +4,68 @@ from tensorforce.execution import Runner
 from JavaDungeon import LevelLoader
 from DungeonTFEnvironment import DungeonTFEnvironment
 
-def train():
-    agentType     = 'ppo'
-    topDir        = '../../'
-    levelDir      = topDir + 'level/'
-    summaryDir    = topDir + 'summaries/tf/test'
-    summaryName   = agentType
-    modelsDir     = topDir + 'models/tf/test'
-    modelName     = agentType
-    episodes      = 2
-    max_timesteps = 100
+import argparse
 
-    env = DungeonTFEnvironment(LevelLoader().loadLevel(levelDir + 'level0.json'))
-    
+def train(config: dict):
+    dungeon = DungeonTFEnvironment(
+        dungeon=LevelLoader().loadLevel(config["dungeon"])
+    )
+
     environment = Environment.create(
-        environment=env,
-        max_episode_timesteps=max_timesteps
+        environment=dungeon,
+        max_episode_timesteps=config["timesteps"]
     )
 
     agent = Agent.create(
-       agent=agentType,
-       environment=environment,
-       batch_size=10,
-       learning_rate=1e-3,
-       exploration=0.3,
-       #summarizer=dict(directory=summaryDir, filename=summaryName, summaries='all'),
+        agent=config["agent"],
+        environment=environment
     )
 
     runner = Runner(
         agent=agent,
         environment=environment,
-        max_episode_timesteps=max_timesteps
+        max_episode_timesteps=config["timesteps"]
     )
 
-    runner.run(num_episodes=episodes)
-    
-    agent.save(directory=modelsDir,          filename=modelName, format='saved-model', append='episodes')
-    agent.save(directory=modelsDir+'/numpy', filename=modelName, format='numpy',       append='episodes')
-    
+    runner.run(num_episodes=config["episodes"])
+
+    agent.save(directory=config["out"],          format='saved-model')
+    agent.save(directory=config["out"]+'/numpy', format='numpy')
+
     runner.close()
     agent.close()
     environment.close()
 
+def checkPositive(value):
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+    return ivalue
+
+def setupArgumentParser():
+
+    parser = argparse.ArgumentParser()
+
+    # TODO: Add checker for paths/files
+    parser.add_argument("-d", "--dungeon", help="")
+    parser.add_argument("-a", "--agent", help="")
+    parser.add_argument("-o", "--out", default="saved-model", help="")
+    parser.add_argument("-m", "--maxtimesteps", type=checkPositive, default=100, help="")
+    parser.add_argument("-e", "--episodes", type=checkPositive, default=100, help="")
+
+    return parser
 
 if __name__ == '__main__':
-    train()
+
+    parser = setupArgumentParser()
+    args = parser.parse_args()
+
+    config = {
+        "dungeon": args.dungeon,
+        "agent": args.agent,
+        "episodes": args.episodes,
+        "timesteps": args.maxtimesteps,
+        "out": args.out
+    }
+
+    train(config)
