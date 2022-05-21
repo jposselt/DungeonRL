@@ -1,9 +1,9 @@
 from stable_baselines3.common.env_checker import check_env
-from DungeonEnv import DungeonEnv
-from level.generator.dummy import DummyGenerator
+from DungeonGymEnvironment import DungeonGymEnvironment
+from JavaDungeon import DummyGenerator
 
 def main():
-    env = DungeonEnv(DummyGenerator().getLevel(), 4)
+    env = DungeonGymEnvironment(DummyGenerator().getLevel(), 4)
     check_env(env, warn=True)
     
     print(env.reset())

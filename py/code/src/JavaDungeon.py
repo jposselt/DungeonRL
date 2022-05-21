@@ -17,4 +17,5 @@ from tools import Point
 from level.elements import Level
 from level.elements.room import Room
 from level.elements.room import Tile
+from level.generator.dummy import DummyGenerator
 from level.generator.LevelLoader import LevelLoader
