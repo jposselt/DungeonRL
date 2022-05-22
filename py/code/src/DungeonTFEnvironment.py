@@ -151,3 +151,22 @@ class DungeonTFEnvironment(Environment):
             self.dungeon.getTileAt(Point(p.x - self.step_size, p.y).toCoordinate()).isAccessible(),
             self.dungeon.getTileAt(Point(p.x + self.step_size, p.y).toCoordinate()).isAccessible()
         ])
+
+    def setState(self, state: Point):
+        """Sets the current state of the environment if given a valid state parameter (i.e. a reachable state).
+
+        Args:
+            state (Point): The desired new state of the environment.
+
+        Returns:
+            dict[state, action_mask], bool | 0 | 1 | 2, float: Dictionary containing next state(s)
+            and action mask, whether a terminal state is reached or 2 if the episode was
+            aborted and observed reward.
+        """
+        if self.dungeon.getTileAt(state.toCoordinate()).isAccessible():
+            self.state = np.array([state.x, state.y]).astype(np.float32)
+
+        action_mask = self.getActionMask(Point(self.state[0], self.state[1]))
+        states = dict(state=self.state, action_mask=action_mask)
+
+        return states
