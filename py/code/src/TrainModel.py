@@ -5,15 +5,17 @@ from JavaDungeon import LevelLoader
 from DungeonTFEnvironment import DungeonTFEnvironment
 
 import argparse
+import json
+from os.path import join, abspath
 
 def train(config: dict):
     dungeon = DungeonTFEnvironment(
-        dungeon=LevelLoader().loadLevel(config["dungeon"])
+        dungeon=LevelLoader().loadLevel(config["environment"]["dungeon"])
     )
 
     environment = Environment.create(
         environment=dungeon,
-        max_episode_timesteps=config["timesteps"]
+        max_episode_timesteps=config["environment"]["maxTimesteps"]
     )
 
     agent = Agent.create(
@@ -24,13 +26,13 @@ def train(config: dict):
     runner = Runner(
         agent=agent,
         environment=environment,
-        max_episode_timesteps=config["timesteps"]
+        max_episode_timesteps=config["runner"]["maxTimesteps"]
     )
 
-    runner.run(num_episodes=config["episodes"])
+    runner.run(num_episodes=config["runner"]["episodes"])
 
-    agent.save(directory=config["out"],          format='saved-model')
-    agent.save(directory=config["out"]+'/numpy', format='numpy')
+    agent.save(directory=config["output"]+'/saved-model', format='saved-model')
+    agent.save(directory=config["output"]+'/numpy-model', format='numpy')
 
     runner.close()
     agent.close()
@@ -55,17 +57,30 @@ def setupArgumentParser():
 
     return parser
 
+def saveConfiguration(dungeon, agent, epsiodes, maxTimesteps, out):
+    with open(agent) as agentFile, open(join(out,"config.json"), 'w') as configFile:
+        agent = json.load(agentFile)
+
+        config = {
+            "environment": {
+                "dungeon": abspath(dungeon),
+                "maxTimesteps": maxTimesteps
+            },
+            "agent": agent,
+            "runner": {
+                "episodes": epsiodes,
+                "maxTimesteps": maxTimesteps
+            },
+            "output": abspath(out)
+        }
+
+        json.dump(config, configFile, indent=2)
+        return config
+
 if __name__ == '__main__':
 
     parser = setupArgumentParser()
     args = parser.parse_args()
 
-    config = {
-        "dungeon": args.dungeon,
-        "agent": args.agent,
-        "episodes": args.episodes,
-        "timesteps": args.maxtimesteps,
-        "out": args.out
-    }
-
+    config = saveConfiguration(args.dungeon, args.agent, args.episodes, args.maxtimesteps, args.out)
     train(config)
