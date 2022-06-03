@@ -9,6 +9,11 @@ import json
 from os.path import join, abspath
 
 def train(config: dict):
+    """Trains a RL model.
+
+    Args:
+        config (dict): The training configuration.
+    """
     dungeon = DungeonTFEnvironment(
         dungeon=LevelLoader().loadLevel(config["environment"]["dungeon"])
     )
@@ -39,12 +44,28 @@ def train(config: dict):
     environment.close()
 
 def checkPositive(value):
+    """Checks if input values are positive integers
+
+    Args:
+        value (Any): Input value
+
+    Raises:
+        argparse.ArgumentTypeError: Raised if input is not a positive integer
+
+    Returns:
+        int: A positive integer
+    """
     ivalue = int(value)
     if ivalue <= 0:
         raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
     return ivalue
 
 def setupArgumentParser():
+    """Configure a command line argument parser.
+
+    Returns:
+        ArgumentParser: A command line argument parser.
+    """
     parser = argparse.ArgumentParser()
 
     # TODO: Add checks for paths/files
@@ -58,6 +79,14 @@ def setupArgumentParser():
     return parser
 
 def saveConfiguration(args):
+    """Assembles a training configuration from command line arguments and saves it as a JSON file.
+
+    Args:
+        args (Namespace): Namespace with the parsed command line arguments
+
+    Returns:
+        dict: A dictionary representing the configuration
+    """
     with open(args.agent) as agentFile, open(join(args.out,"config.json"), 'w') as configFile:
         agent = json.load(agentFile)
         if args.summarize:
