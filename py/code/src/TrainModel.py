@@ -15,7 +15,7 @@ def train(config: dict):
 
     environment = Environment.create(
         environment=dungeon,
-        max_episode_timesteps=config["environment"]["maxTimesteps"]
+        max_episode_timesteps=config["environment"]["max_timesteps"]
     )
 
     agent = Agent.create(
@@ -26,7 +26,7 @@ def train(config: dict):
     runner = Runner(
         agent=agent,
         environment=environment,
-        max_episode_timesteps=config["runner"]["maxTimesteps"]
+        max_episode_timesteps=config["runner"]["max_timesteps"]
     )
 
     runner.run(num_episodes=config["runner"]["episodes"])
@@ -45,42 +45,38 @@ def checkPositive(value):
     return ivalue
 
 def setupArgumentParser():
-
     parser = argparse.ArgumentParser()
 
-    # TODO: Add checker for paths/files
+    # TODO: Add checks for paths/files
     parser.add_argument("-d", "--dungeon", help="")
     parser.add_argument("-a", "--agent", help="")
-    parser.add_argument("-o", "--out", default="saved-model", help="")
-    parser.add_argument("-m", "--maxtimesteps", type=checkPositive, default=100, help="")
+    parser.add_argument("-o", "--out", default="out", help="")
+    parser.add_argument("-m", "--max_timesteps", type=checkPositive, default=100, help="")
     parser.add_argument("-e", "--episodes", type=checkPositive, default=100, help="")
 
     return parser
 
-def saveConfiguration(dungeon, agent, epsiodes, maxTimesteps, out):
-    with open(agent) as agentFile, open(join(out,"config.json"), 'w') as configFile:
+def saveConfiguration(args):
+    with open(args.agent) as agentFile, open(join(args.out,"config.json"), 'w') as configFile:
         agent = json.load(agentFile)
 
         config = {
             "environment": {
-                "dungeon": abspath(dungeon),
-                "maxTimesteps": maxTimesteps
+                "dungeon": abspath(args.dungeon),
+                "max_timesteps": args.max_timesteps
             },
             "agent": agent,
             "runner": {
-                "episodes": epsiodes,
-                "maxTimesteps": maxTimesteps
+                "episodes": args.episodes,
+                "max_timesteps": args.max_timesteps
             },
-            "output": abspath(out)
+            "output": abspath(args.out)
         }
 
         json.dump(config, configFile, indent=2)
         return config
 
 if __name__ == '__main__':
-
     parser = setupArgumentParser()
-    args = parser.parse_args()
-
-    config = saveConfiguration(args.dungeon, args.agent, args.episodes, args.maxtimesteps, args.out)
+    config = saveConfiguration(parser.parse_args())
     train(config)
