@@ -78,7 +78,7 @@ def setupArgumentParser():
 
     return parser
 
-def saveConfiguration(args):
+def assembleConfiguration(args):
     """Assembles a training configuration from command line arguments and saves it as a JSON file.
 
     Args:
@@ -87,7 +87,7 @@ def saveConfiguration(args):
     Returns:
         dict: A dictionary representing the configuration
     """
-    with open(args.agent) as agentFile, open(join(args.out,"config.json"), 'w') as configFile:
+    with open(args.agent) as agentFile:
         agent = json.load(agentFile)
         if args.summarize:
             agent["summarizer"] = {
@@ -108,10 +108,20 @@ def saveConfiguration(args):
             "output": abspath(args.out)
         }
 
-        json.dump(config, configFile, indent=2)
         return config
+
+def saveConfig(config, fileName="config.json"):
+    """Save a training configuration as a JSON file.
+
+    Args:
+        config (dict): The configuration
+        fileName (str, optional): Name of the configuration file. Defaults to "config.json".
+    """
+    with open(join(config["output"], fileName), 'w') as configFile:
+        json.dump(config, configFile, indent=2)
 
 if __name__ == '__main__':
     parser = setupArgumentParser()
-    config = saveConfiguration(parser.parse_args())
+    config = assembleConfiguration(parser.parse_args())
+    saveConfig(config)
     train(config)
