@@ -53,12 +53,18 @@ def setupArgumentParser():
     parser.add_argument("-o", "--out", default="out", help="")
     parser.add_argument("-m", "--max_timesteps", type=checkPositive, default=100, help="")
     parser.add_argument("-e", "--episodes", type=checkPositive, default=100, help="")
+    parser.add_argument("-s", "--summarize", action='store_true', help="")
 
     return parser
 
 def saveConfiguration(args):
     with open(args.agent) as agentFile, open(join(args.out,"config.json"), 'w') as configFile:
         agent = json.load(agentFile)
+        if args.summarize:
+            agent["summarizer"] = {
+                "directory": join(args.out,"summary"),
+                "summaries": ['entropy', 'loss', 'reward', 'update-norm']
+            }
 
         config = {
             "environment": {
