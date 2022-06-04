@@ -110,7 +110,7 @@ def assembleConfiguration(args):
 
         return config
 
-def saveConfig(config, fileName="config.json"):
+def saveConfiguration(config, fileName="config.json"):
     """Save a training configuration as a JSON file.
 
     Args:
@@ -123,5 +123,5 @@ def saveConfig(config, fileName="config.json"):
 if __name__ == '__main__':
     parser = setupArgumentParser()
     config = assembleConfiguration(parser.parse_args())
-    saveConfig(config)
+    saveConfiguration(config)
     train(config)
