@@ -21,7 +21,8 @@ def train(config: dict):
 
     environment = Environment.create(
         environment=dungeon,
-        max_episode_timesteps=config["environment"]["max_timesteps"]
+        max_episode_timesteps=config["environment"]["max_timesteps"],
+        reward_shaping=config["environment"]["reward_shaping"]
     )
 
     agent = Agent.create(
@@ -76,6 +77,7 @@ def setupArgumentParser():
     parser.add_argument("-m", "--max_timesteps", type=checkPositive, default=100, help="")
     parser.add_argument("-e", "--episodes", type=checkPositive, default=100, help="")
     parser.add_argument("-s", "--summarize", action='store_true', help="")
+    parser.add_argument("-r", "--reward_shaping", default=None, help="")
 
     return parser
 
@@ -99,7 +101,8 @@ def assembleConfiguration(args):
         config = {
             "environment": {
                 "dungeon": abspath(args.dungeon),
-                "max_timesteps": args.max_timesteps
+                "max_timesteps": args.max_timesteps,
+                "reward_shaping": args.reward_shaping
             },
             "agent": agent,
             "runner": {
