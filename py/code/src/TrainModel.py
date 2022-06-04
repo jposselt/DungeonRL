@@ -6,7 +6,8 @@ from DungeonTFEnvironment import DungeonTFEnvironment
 
 import argparse
 import json
-from os.path import join, abspath
+from os import makedirs
+from os.path import join, abspath, exists
 
 def train(config: dict):
     """Trains a RL model.
@@ -117,6 +118,9 @@ def saveConfiguration(config, fileName="config.json"):
         config (dict): The configuration
         fileName (str, optional): Name of the configuration file. Defaults to "config.json".
     """
+    if not exists(config["output"]):
+        makedirs(config["output"])
+
     with open(join(config["output"], fileName), 'w') as configFile:
         json.dump(config, configFile, indent=2)
 
