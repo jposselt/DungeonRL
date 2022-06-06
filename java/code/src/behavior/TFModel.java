@@ -18,25 +18,19 @@ public class TFModel implements IBehavior<Point, Integer> {
         final String detOp    = "serving_default_deterministic";
         final String outputOp = "StatefulPartitionedCall";
 
-        Tensor<Float> input           = Tensor.create(new float[][] {{state.x, state.y}}, Float.class);
-        Tensor<Boolean> mask          = Tensor.create(new boolean[][] {actionMask}, Boolean.class);
-        Tensor<Boolean> deterministic = Tensor.create(true, Boolean.class);
-
-        Tensor<?> result = this.session.runner()
-                .feed(inputOp, input)
-                .feed(maskOp, mask)
-                .feed(detOp, deterministic)
-                .fetch(outputOp)
-                .run().get(0);
-
-        Integer action = (int) result.copyTo(new long[1])[0];
-
-        deterministic.close();
-        result.close();
-        input.close();
-        mask.close();
-
-        return action;
+        try (Tensor<Float> input           = Tensor.create(new float[][] {{state.x, state.y}}, Float.class);
+             Tensor<Boolean> mask          = Tensor.create(new boolean[][] {actionMask}, Boolean.class);
+             Tensor<Boolean> deterministic = Tensor.create(true, Boolean.class);
+             ) {
+            try (Tensor<?> result = this.session.runner()
+                    .feed(inputOp, input)
+                    .feed(maskOp, mask)
+                    .feed(detOp, deterministic)
+                    .fetch(outputOp)
+                    .run().get(0);) {
+                return (Integer) (int) result.copyTo(new long[1])[0];
+            }
+        }
     }
 
 }
