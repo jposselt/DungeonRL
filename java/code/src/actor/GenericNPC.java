@@ -62,7 +62,7 @@ public class GenericNPC<I,O> implements IEntity {
 
     public void setLevel(Level level) {
         this.level = level;
-        this.position = level.getStartTile().getGlobalPosition().toPoint();
+        this.position = level.getStartTile().getCoordinate().toPoint();
     }
 
     public Level getLevel() {

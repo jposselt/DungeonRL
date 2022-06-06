@@ -32,7 +32,7 @@ public class Game extends MainController {
 
     @Override
     protected void endFrame() {
-        if (npc.getPosition().toCoordinate().equals(levelAPI.getCurrentLevel().getEndTile().getGlobalPosition())) {
+        if (npc.getPosition().toCoordinate().equals(levelAPI.getCurrentLevel().getEndTile().getCoordinate())) {
             npc.setPostion(getRandomPosition());
         }
     }
@@ -41,7 +41,7 @@ public class Game extends MainController {
         Random rand = new Random();
         List<Room> rooms = levelAPI.getCurrentLevel().getRooms();
         Room room = rooms.get(rand.nextInt(rooms.size()));
-        return room.getRandomFloorTile().getGlobalPosition().toPoint();
+        return room.getRandomFloorTile().getCoordinate().toPoint();
     }
 
     @Override
