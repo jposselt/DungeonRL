@@ -23,6 +23,7 @@
 hs_err_pid*
 
 # Custom folders
+output/
 level/
 models/
 summaries/
@@ -36,3 +37,9 @@ py/code/src/__pycache__/
 
 # Intelij
 .idea/
+
+# VS Code
+**/.vscode/
+
+# Images
+*.png
