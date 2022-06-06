@@ -17,6 +17,13 @@ import java.util.Random;
 
 public class Game extends MainController {
     private TestNPC npc;
+    private final String levelFile;
+    private final String modelPath;
+
+    public Game(String level, String model) {
+        this.levelFile = level;
+        this.modelPath = model;
+    }
 
     @Override
     public void onLevelLoad() {
@@ -46,11 +53,12 @@ public class Game extends MainController {
 
     @Override
     protected void setup() {
-        levelAPI.setGenerator(new LevelLoader());
+        LevelLoader loader = new LevelLoader();
+        loader.loadLevel(this.levelFile);
+        levelAPI.setGenerator(loader);
 
         final String texture = "character/monster/chort_idle_anim_f0.png";
-        final String modelDir = "D:\\Repos\\DungeonRL\\models\\tf\\masked\\ppo-10000";
-        IBehavior<Point, Integer> behavior = new TFModel(modelDir);
+        IBehavior<Point, Integer> behavior = new TFModel(this.modelPath);
         npc = new TestNPC(batch, painter, texture, behavior);
 
         entityController.add(npc);
@@ -64,6 +72,8 @@ public class Game extends MainController {
     }
 
     public static void main(String[] args) {
-        Launcher.run(new Game());
+        final String model = "";
+        final String level = "";
+        Launcher.run(new Game(level, model));
     }
 }
