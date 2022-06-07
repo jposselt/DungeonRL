@@ -11,6 +11,8 @@ import level.generator.LevelLoader.LevelLoader;
 import level.generator.dungeong.graphg.NoSolutionException;
 import tools.Point;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Random;
 
@@ -72,8 +74,17 @@ public class Game extends MainController {
     }
 
     public static void main(String[] args) {
-        final String model = "";
-        final String level = "";
-        Launcher.run(new Game(level, model));
+        if (args.length < 2) {
+            return;
+        }
+
+        final String levelFile = args[0];
+        final String modelDirectory = args[1];
+
+        if (!Files.exists(Paths.get(levelFile)) || !Files.exists(Paths.get(modelDirectory))) {
+            return;
+        }
+
+        Launcher.run(new Game(levelFile, modelDirectory));
     }
 }
