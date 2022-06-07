@@ -91,7 +91,7 @@ def PlotPolicy(state_action_list, out):
     ax.xaxis.set_ticks([])
     ax.yaxis.set_ticks([])
     ax.set_aspect('equal')
-    plt.savefig(out)
+    plt.savefig(out, dpi=150)
 
 if __name__ == '__main__':
     parser = setupArgumentParser()
