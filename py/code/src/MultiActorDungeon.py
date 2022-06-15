@@ -55,10 +55,10 @@ class MultiActorDungeon(Environment):
         self._parallel_indices = np.arange(self.num_actors())
 
         # Single shared environment logic, plus per-actor perspective
-        start_actor_1 = random.choice(self.start_coords)
-        start_actor_2 = random.choice(self.start_coords)
+        start_actor_1 = random.choice(self.accessible_coords)
+        start_actor_2 = random.choice(self.accessible_coords)
         while (start_actor_1.equals(start_actor_2)):
-            start_actor_2 = random.choice(self.start_coords)
+            start_actor_2 = random.choice(self.accessible_coords)
         actor_1_perspective = np.array([start_actor_1.x, start_actor_1.y, start_actor_2.x, start_actor_2.y]).astype(np.float32)
         actor_2_perspective = np.array([start_actor_2.x, start_actor_2.y, start_actor_1.x, start_actor_1.y]).astype(np.float32)
         states = np.stack([actor_1_perspective, actor_2_perspective], axis=0)
@@ -83,7 +83,7 @@ class MultiActorDungeon(Environment):
         states = np.stack([actor_1_perspective, actor_2_perspective], axis=0)
 
         # TODO: Reward calculation
-        reward = 0
+        reward = np.stack([0, 0], axis=0)
 
         # Update internal state
         self._states = actor_1_perspective
@@ -115,7 +115,8 @@ class MultiActorDungeon(Environment):
         # 2: go west
         # 3: go east
         # 4: do nothing
-        new_x = position.x, new_y = position.y
+        new_x = position.x
+        new_y = position.y
         if action == 0:
             new_y + self.step_size
         elif action == 1:
