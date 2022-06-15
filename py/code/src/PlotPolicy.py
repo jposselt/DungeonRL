@@ -26,6 +26,9 @@ def CreateEnvironment(config):
         dungeon=LevelLoader().loadLevel(config["environment"]["dungeon"])
     )
 
+    if config["environment"]["disable_action_masking"]:
+        dungeon.disableActionMasking()
+
     environment = Environment.create(
         environment=dungeon,
         max_episode_timesteps=config["environment"]["max_timesteps"]

@@ -19,6 +19,9 @@ def train(config: dict):
         dungeon=LevelLoader().loadLevel(config["environment"]["dungeon"])
     )
 
+    if config["environment"]["disable_action_masking"]:
+        dungeon.disableActionMasking()
+
     environment = Environment.create(
         environment=dungeon,
         max_episode_timesteps=config["environment"]["max_timesteps"],
@@ -78,6 +81,7 @@ def setupArgumentParser():
     parser.add_argument("-e", "--episodes", type=checkPositive, default=100, help="")
     parser.add_argument("-s", "--summarize", action='store_true', help="")
     parser.add_argument("-r", "--reward_shaping", default=None, help="")
+    parser.add_argument("--disable_action_masking", action='store_true', help="")
 
     return parser
 
@@ -102,7 +106,8 @@ def assembleConfiguration(args):
             "environment": {
                 "dungeon": abspath(args.dungeon),
                 "max_timesteps": args.max_timesteps,
-                "reward_shaping": args.reward_shaping
+                "reward_shaping": args.reward_shaping,
+                "disable_action_masking": args.disable_action_masking
             },
             "agent": agent,
             "runner": {

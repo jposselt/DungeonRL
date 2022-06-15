@@ -36,6 +36,9 @@ class DungeonTFEnvironment(Environment):
         # Step size
         self.step_size = 1
 
+        # On/Off switch for action masking
+        self.action_masking = True
+
 
     def states(self):
         """Returns the state space specification.
@@ -90,15 +93,7 @@ class DungeonTFEnvironment(Environment):
             aborted and observed reward.
         """
         # Compute next state and associated action mask
-        if actions == 0:
-            self.state[1] += self.step_size
-        elif actions == 1:
-            self.state[1] -= self.step_size
-        elif actions == 2:
-            self.state[0] -= self.step_size
-        elif actions == 3:
-            self.state[0] += self.step_size
-        
+        self.state = self.getNextState(actions)
         action_mask = self.getActionMask(Point(self.state[0], self.state[1]))
         states = dict(state=self.state, action_mask=action_mask)
         
@@ -137,7 +132,7 @@ class DungeonTFEnvironment(Environment):
 
 
     def getActionMask(self, p: Point):
-        """Return array possible actions
+        """Return array possible actions if not disabled
 
         Args:
             p (Point): Current state from which an action is to be taken
@@ -145,6 +140,9 @@ class DungeonTFEnvironment(Environment):
         Returns:
             array: Array of booleans indicating which action are possible (true=action is possible, false=action is not possible).
         """
+        if not self.action_masking:
+            return np.asarray([True, True, True, True])
+
         return np.asarray([
             self.dungeon.getTileAt(Point(p.x, p.y + self.step_size).toCoordinate()).isAccessible(),
             self.dungeon.getTileAt(Point(p.x, p.y - self.step_size).toCoordinate()).isAccessible(),
@@ -170,3 +168,33 @@ class DungeonTFEnvironment(Environment):
         states = dict(state=self.state, action_mask=action_mask)
 
         return states
+
+    def disableActionMasking(self):
+        """Disables action masking"""
+        self.action_masking = False
+
+    def getNextState(self, action):
+        """Returns the next state of the environment following a given action.
+
+        Args:
+            action (int): Action taken by the agent
+
+        Returns:
+            np.array: next state
+        """
+        nextState = self.state.copy()
+        if action == 0:
+            nextState[1] += self.step_size
+        elif action == 1:
+            nextState[1] -= self.step_size
+        elif action == 2:
+            nextState[0] -= self.step_size
+        elif action == 3:
+            nextState[0] += self.step_size
+
+        if self.action_masking:
+            return nextState
+
+        if self.dungeon.getTileAt(Point(nextState[0], nextState[1]).toCoordinate()).isAccessible():
+            return nextState
+        return self.state
