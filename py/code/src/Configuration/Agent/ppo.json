@@ -23,7 +23,7 @@
         "type": "decaying",
         "decay": "linear",
         "unit": "updates",
-        "num_steps": 1000,
+        "num_steps": 5000,
         "initial_value": 1.0,
         "final_value": 0.1
     },
