@@ -129,3 +129,33 @@ class MultiActorDungeon(Environment):
         if (self.dungeon.getTileAt(Point(new_x, new_y).toCoordinate()).isAccessible()):
             return self.Point2D(new_x, new_y)
         return position
+
+
+if __name__ == '__main__':
+    from JavaDungeon import LevelLoader
+    from tensorforce.agents import Agent
+    from tensorforce.execution import Runner
+    dungeon = MultiActorDungeon(
+        dungeon=LevelLoader().loadLevel("../../level/level0.json")
+    )
+
+    environment = Environment.create(
+        environment=dungeon,
+        max_episode_timesteps=100
+    )
+
+    agent = Agent.create(
+        agent="src/Configuration/Agent/multiactor_ppo.json",
+        environment=environment
+    )
+
+    runner = Runner(
+        agent=agent,
+        environment=environment,
+        max_episode_timesteps=100
+    )
+
+    runner.run(num_episodes=10)
+    runner.close()
+    agent.close()
+    environment.close()
