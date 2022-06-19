@@ -1,5 +1,6 @@
 import random
 import numpy as np
+from math import sqrt, pow
 
 from tensorforce import Environment
 from JavaDungeon import Point, Level
@@ -129,6 +130,12 @@ class MultiActorDungeon(Environment):
         if (self.dungeon.getTileAt(Point(new_x, new_y).toCoordinate()).isAccessible()):
             return self.Point2D(new_x, new_y)
         return position
+
+    def distance(self, p_1, p_2):
+        return sqrt(pow(p_1.x - p_2.x, 2) + pow(p_1.y - p_2.y, 2))
+
+    def disableActionMasking(self):
+        pass
 
 
 if __name__ == '__main__':
