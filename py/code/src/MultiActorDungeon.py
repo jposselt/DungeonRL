@@ -119,13 +119,13 @@ class MultiActorDungeon(Environment):
         new_x = position.x
         new_y = position.y
         if action == 0:
-            new_y + self.step_size
+            new_y += self.step_size
         elif action == 1:
-            new_y - self.step_size
+            new_y -= self.step_size
         elif action == 2:
-            new_x - self.step_size
+            new_x -= self.step_size
         elif action == 3:
-            new_x + self.step_size
+            new_x += self.step_size
 
         if (self.dungeon.getTileAt(Point(new_x, new_y).toCoordinate()).isAccessible()):
             return self.Point2D(new_x, new_y)
