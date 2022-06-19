@@ -24,7 +24,7 @@ def train(config: dict):
     )
 
     if config["environment"]["disable_action_masking"]:
-        dungeon_environment.disableActionMasking()
+        dungeon_environment.disable_action_masking()
 
     environment = Environment.create(
         environment=dungeon_environment,

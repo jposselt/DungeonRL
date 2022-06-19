@@ -27,7 +27,7 @@ def CreateEnvironment(config):
     )
 
     if config["environment"]["disable_action_masking"]:
-        dungeon.disableActionMasking()
+        dungeon.disable_action_masking()
 
     environment = Environment.create(
         environment=dungeon,

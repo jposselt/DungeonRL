@@ -21,7 +21,7 @@ class DungeonTFEnvironment(Environment):
         # State space
         state_indices = [0, 1]
         self._state_indices = np.array(state_indices, np.int32)
-        self._state_bounds = self.getStateBounds(dungeon)
+        self._state_bounds = self.get_state_bounds(dungeon)
         
         # Start/Goal
         self.goal_coord = dungeon.getEndTile().getGlobalPosition()
@@ -71,9 +71,9 @@ class DungeonTFEnvironment(Environment):
             for meaning of the mask.
         """
         # Initial state and associated action mask
-        start = random.choice(self.start_coords)
-        self.state = np.array([start.x, start.y]).astype(np.float32)
-        action_mask = self.getActionMask(Point(start.x, start.y))
+        start_position = random.choice(self.start_coords)
+        self.state = np.array([start_position.x, start_position.y]).astype(np.float32)
+        action_mask = self.get_action_mask(start_position.x, start_position.y)
         
         # Add action mask to states dictionary (mask item is "[NAME]_mask", here "action_mask")
         states = dict(state=self.state, action_mask=action_mask)
@@ -93,8 +93,8 @@ class DungeonTFEnvironment(Environment):
             aborted and observed reward.
         """
         # Compute next state and associated action mask
-        self.state = self.getNextState(actions)
-        action_mask = self.getActionMask(Point(self.state[0], self.state[1]))
+        self.state = self.get_next_state(actions)
+        action_mask = self.get_action_mask(self.state[0], self.state[1])
         states = dict(state=self.state, action_mask=action_mask)
         
         # Compute terminal
@@ -106,7 +106,7 @@ class DungeonTFEnvironment(Environment):
         return states, terminal, reward
 
 
-    def getStateBounds(self, dungeon: Level):
+    def get_state_bounds(self, dungeon: Level):
         """Returns the boundaries of the state space
 
         Args:
@@ -131,26 +131,27 @@ class DungeonTFEnvironment(Environment):
         return np.array([[x_min, y_min],[x_max, y_max]])
 
 
-    def getActionMask(self, p: Point):
-        """Return array possible actions if not disabled
+    def get_action_mask(self, x_position, y_position):
+        """Return array possible actions
 
         Args:
             p (Point): Current state from which an action is to be taken
 
         Returns:
             array: Array of booleans indicating which action are possible (true=action is possible, false=action is not possible).
+            If masking is disabled all values are true.
         """
         if not self.action_masking:
-            return np.asarray([True, True, True, True])
+            return np.full(self.actions['num_values'], True)
 
         return np.asarray([
-            self.dungeon.getTileAt(Point(p.x, p.y + self.step_size).toCoordinate()).isAccessible(),
-            self.dungeon.getTileAt(Point(p.x, p.y - self.step_size).toCoordinate()).isAccessible(),
-            self.dungeon.getTileAt(Point(p.x - self.step_size, p.y).toCoordinate()).isAccessible(),
-            self.dungeon.getTileAt(Point(p.x + self.step_size, p.y).toCoordinate()).isAccessible()
+            self.dungeon.getTileAt(Point(x_position, y_position + self.step_size).toCoordinate()).isAccessible(),
+            self.dungeon.getTileAt(Point(x_position, y_position - self.step_size).toCoordinate()).isAccessible(),
+            self.dungeon.getTileAt(Point(x_position - self.step_size, y_position).toCoordinate()).isAccessible(),
+            self.dungeon.getTileAt(Point(x_position + self.step_size, y_position).toCoordinate()).isAccessible()
         ])
 
-    def setState(self, state: Point):
+    def set_state(self, state: Point):
         """Sets the current state of the environment if given a valid state parameter (i.e. a reachable state).
 
         Args:
@@ -164,16 +165,16 @@ class DungeonTFEnvironment(Environment):
         if self.dungeon.getTileAt(state.toCoordinate()).isAccessible():
             self.state = np.array([state.x, state.y]).astype(np.float32)
 
-        action_mask = self.getActionMask(Point(self.state[0], self.state[1]))
+        action_mask = self.get_action_mask(self.state[0], self.state[1])
         states = dict(state=self.state, action_mask=action_mask)
 
         return states
 
-    def disableActionMasking(self):
+    def disable_action_masking(self):
         """Disables action masking"""
         self.action_masking = False
 
-    def getNextState(self, action):
+    def get_next_state(self, action):
         """Returns the next state of the environment following a given action.
 
         Args:

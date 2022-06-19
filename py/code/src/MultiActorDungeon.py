@@ -143,15 +143,15 @@ class MultiActorDungeon(Environment):
     def get_current_position(self, actor_index: int):
         if actor_index not in self._actor_indices:
             raise ValueError(f"{actor_index} is not an allowed actor index. Allowed indices are {self._actor_indices}")
-        else:
-            x_index = 2 * actor_index + 0
-            y_index = 2 * actor_index + 1
-            return self.Point2D(self._states[x_index], self._states[y_index])
+
+        x_index = 2 * actor_index + 0
+        y_index = 2 * actor_index + 1
+        return self.Point2D(self._states[x_index], self._states[y_index])
 
     def straight_line_distance(self, point_1, point_2):
         return sqrt(pow(point_1.x - point_2.x, 2) + pow(point_1.y - point_2.y, 2))
 
-    def disableActionMasking(self):
+    def disable_action_masking(self):
         pass
 
 
