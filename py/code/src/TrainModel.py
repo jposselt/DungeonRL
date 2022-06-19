@@ -3,11 +3,13 @@ from tensorforce.agents import Agent
 from tensorforce.execution import Runner
 from JavaDungeon import LevelLoader
 from DungeonTFEnvironment import DungeonTFEnvironment
+from MultiActorDungeon import MultiActorDungeon
 
 import argparse
 import json
 from os import makedirs
 from os.path import join, abspath, exists
+
 
 def train(config: dict):
     """Trains a RL model.
@@ -15,7 +17,9 @@ def train(config: dict):
     Args:
         config (dict): The training configuration.
     """
-    dungeon = DungeonTFEnvironment(
+    environmentMap = {"single": DungeonTFEnvironment, "multi": MultiActorDungeon}
+
+    dungeon = environmentMap[config["environment"]["environment"]](
         dungeon=LevelLoader().loadLevel(config["environment"]["dungeon"])
     )
 
@@ -74,6 +78,7 @@ def setupArgumentParser():
     parser = argparse.ArgumentParser()
 
     # TODO: Add checks for paths/files
+    parser.add_argument("--environment", type=str, choices=["single", "multi"], default="single", help="")
     parser.add_argument("-d", "--dungeon", help="")
     parser.add_argument("-a", "--agent", help="")
     parser.add_argument("-o", "--out", default="out", help="")
@@ -94,6 +99,9 @@ def assembleConfiguration(args):
     Returns:
         dict: A dictionary representing the configuration
     """
+    if args.environment == "multi":
+        assert args.reward_shaping == None, "Multi-actor-environment is currently not compatible with the reward shaping option."
+
     with open(args.agent) as agentFile:
         agent = json.load(agentFile)
         if args.summarize:
@@ -104,6 +112,7 @@ def assembleConfiguration(args):
 
         config = {
             "environment": {
+                "environment": args.environment,
                 "dungeon": abspath(args.dungeon),
                 "max_timesteps": args.max_timesteps,
                 "reward_shaping": args.reward_shaping,
