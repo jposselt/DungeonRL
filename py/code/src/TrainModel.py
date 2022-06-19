@@ -17,17 +17,17 @@ def train(config: dict):
     Args:
         config (dict): The training configuration.
     """
-    environmentMap = {"single": DungeonTFEnvironment, "multi": MultiActorDungeon}
+    environment_map = {"single": DungeonTFEnvironment, "multi": MultiActorDungeon}
 
-    dungeon = environmentMap[config["environment"]["environment"]](
+    dungeon_environment = environment_map[config["environment"]["environment"]](
         dungeon=LevelLoader().loadLevel(config["environment"]["dungeon"])
     )
 
     if config["environment"]["disable_action_masking"]:
-        dungeon.disableActionMasking()
+        dungeon_environment.disableActionMasking()
 
     environment = Environment.create(
-        environment=dungeon,
+        environment=dungeon_environment,
         max_episode_timesteps=config["environment"]["max_timesteps"],
         reward_shaping=config["environment"]["reward_shaping"]
     )
