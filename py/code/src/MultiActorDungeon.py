@@ -83,8 +83,12 @@ class MultiActorDungeon(Environment):
         terminal = np.stack([False, False], axis=0)
         states = np.stack([actor_1_perspective, actor_2_perspective], axis=0)
 
-        # TODO: Reward calculation
-        reward = np.stack([0, 0], axis=0)
+        # Reward calculation
+        distance = self.distance(actor_1_position, actor_2_position)
+        delta_actor_1 = self.distance(next_actor_1_position, actor_2_position) - distance
+        delta_actor_2 = self.distance(next_actor_2_position, actor_1_position) - distance
+        r = lambda x : 1 if x > 0 else (-1 if x < 0 else 0)
+        reward = np.stack([r(delta_actor_1), -r(delta_actor_2)], axis=0)
 
         # Update internal state
         self._states = actor_1_perspective
