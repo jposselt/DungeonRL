@@ -2,6 +2,7 @@ import random
 import numpy as np
 from tensorforce import Environment
 from JavaDungeon import Point, Level
+from JavaDungeon import is_position_accessible, get_accessible_coordinates, get_dungeon_bounds
 
 class DungeonTFEnvironment(Environment):
     """An RF learning environment based on the Tensorforce environment interface. Similar to DungeonGymEnvironment
@@ -14,7 +15,7 @@ class DungeonTFEnvironment(Environment):
             dungeon (Level): the dungeon
         """
         super().__init__()
-        
+
         # Dungeon level (java class)
         self.dungeon = dungeon
 
@@ -22,17 +23,15 @@ class DungeonTFEnvironment(Environment):
         state_indices = [0, 1]
         self._state_indices = np.array(state_indices, np.int32)
         self._state_bounds = self.get_state_bounds(dungeon)
-        
+
         # Start/Goal
-        self.goal_coord = dungeon.getEndTile().getGlobalPosition()
-        self.start_coords = [
-            tile.getGlobalPosition()
-            for room in dungeon.getRooms()
-            for sub_list in room.getLayout()
-            for tile in sub_list
-            if tile.isAccessible() and not tile.getGlobalPosition().equals(self.goal_coord)
+        self.goal_coordinate = dungeon.getEndTile().getGlobalPosition()
+        self.start_positions = [
+            coordinate.toPoint()
+            for coordinate in get_accessible_coordinates(self.dungeon)
+            if not coordinate.equals(self.goal_coordinate)
         ]
-        
+
         # Step size
         self.step_size = 1
 
@@ -41,7 +40,7 @@ class DungeonTFEnvironment(Environment):
 
 
     def states(self):
-        """Returns the state space specification.
+        """Returns the specification for external states.
 
         Returns:
             specification: Arbitrarily nested dictionary of state descriptions. See base class for more information.
@@ -67,18 +66,11 @@ class DungeonTFEnvironment(Environment):
         """Resets the environment to start a new episode.
 
         Returns:
-            dict[state, action_mask]: Dictionary containing initial state(s) and action mask. See "getActionMask" method
+            dict[state, action_mask]: Dictionary containing initial state(s) and action mask. See "get_action_mask" method
             for meaning of the mask.
         """
-        # Initial state and associated action mask
-        start_position = random.choice(self.start_coords)
-        self.state = np.array([start_position.x, start_position.y]).astype(np.float32)
-        action_mask = self.get_action_mask(start_position.x, start_position.y)
-        
-        # Add action mask to states dictionary (mask item is "[NAME]_mask", here "action_mask")
-        states = dict(state=self.state, action_mask=action_mask)
-
-        return states
+        self._internal_state = random.choice(self.start_positions)
+        return dict(state=self.get_external_state(), action_mask=self.get_action_mask())
 
 
     def execute(self, actions):
@@ -93,12 +85,11 @@ class DungeonTFEnvironment(Environment):
             aborted and observed reward.
         """
         # Compute next state and associated action mask
-        self.state = self.get_next_state(actions)
-        action_mask = self.get_action_mask(self.state[0], self.state[1])
-        states = dict(state=self.state, action_mask=action_mask)
+        self._internal_state = self.get_next_state(actions)
+        states = dict(state=self.get_external_state(), action_mask=self.get_action_mask())
         
         # Compute terminal
-        terminal = Point(self.state[0], self.state[1]).toCoordinate().equals(self.goal_coord)
+        terminal = Point(self._internal_state.x, self._internal_state.y).toCoordinate().equals(self.goal_coordinate)
         
         # Compute reward
         reward = 1 if terminal else 0
@@ -115,40 +106,28 @@ class DungeonTFEnvironment(Environment):
         Returns:
             array[[x_min, y_min],[x_max, y_max]]: Array containing minimum and maximum values of the 2D state space.
         """
-        # Get all accessible tiles
-        accessible_tiles = [tile for room in dungeon.getRooms() for sub_list in room.getLayout() for tile in sub_list if tile.isAccessible()]
-        
-        # Get list of x/y coordinates
-        x_coords = [coord.x for coord in [tile.getGlobalPosition() for tile in accessible_tiles]]
-        y_coords = [coord.y for coord in [tile.getGlobalPosition() for tile in accessible_tiles]]
-        
-        # Get min/max values
-        x_min = min(x_coords)
-        x_max = max(x_coords)
-        y_min = min(y_coords)
-        y_max = max(y_coords)
-        
+        x_min, y_min, x_max, y_max = get_dungeon_bounds(dungeon)
         return np.array([[x_min, y_min],[x_max, y_max]])
 
 
-    def get_action_mask(self, x_position, y_position):
-        """Return array possible actions
-
-        Args:
-            p (Point): Current state from which an action is to be taken
+    def get_action_mask(self):
+        """Returns array of possible actions
 
         Returns:
-            array: Array of booleans indicating which action are possible (true=action is possible, false=action is not possible).
-            If masking is disabled all values are true.
+            array[bool]: Array of booleans indicating which action are possible for the current internal state
+            (true=action is possible, false=action is not possible). If action masking is disabled all values are true.
         """
         if not self.action_masking:
             return np.full(self.actions['num_values'], True)
 
+        step_north = Point(self._internal_state.x, self._internal_state.y + self.step_size)
+        step_south = Point(self._internal_state.x, self._internal_state.y - self.step_size)
+        step_east  = Point(self._internal_state.x + self.step_size, self._internal_state.y)
+        step_west  = Point(self._internal_state.x - self.step_size, self._internal_state.y)
+
         return np.asarray([
-            self.dungeon.getTileAt(Point(x_position, y_position + self.step_size).toCoordinate()).isAccessible(),
-            self.dungeon.getTileAt(Point(x_position, y_position - self.step_size).toCoordinate()).isAccessible(),
-            self.dungeon.getTileAt(Point(x_position - self.step_size, y_position).toCoordinate()).isAccessible(),
-            self.dungeon.getTileAt(Point(x_position + self.step_size, y_position).toCoordinate()).isAccessible()
+            is_position_accessible(self.dungeon, step_north), is_position_accessible(self.dungeon, step_south),
+            is_position_accessible(self.dungeon, step_west), is_position_accessible(self.dungeon, step_east),
         ])
 
     def set_state(self, state: Point):
@@ -162,13 +141,10 @@ class DungeonTFEnvironment(Environment):
             and action mask, whether a terminal state is reached or 2 if the episode was
             aborted and observed reward.
         """
-        if self.dungeon.getTileAt(state.toCoordinate()).isAccessible():
-            self.state = np.array([state.x, state.y]).astype(np.float32)
+        if is_position_accessible(self.dungeon, state):
+            self._internal_state = state
 
-        action_mask = self.get_action_mask(self.state[0], self.state[1])
-        states = dict(state=self.state, action_mask=action_mask)
-
-        return states
+        return dict(state=self.get_external_state(), action_mask=self.get_action_mask())
 
     def disable_action_masking(self):
         """Disables action masking"""
@@ -183,19 +159,25 @@ class DungeonTFEnvironment(Environment):
         Returns:
             np.array: next state
         """
-        nextState = self.state.copy()
+        next_state = Point(self._internal_state)
         if action == 0:
-            nextState[1] += self.step_size
+            next_state.y += self.step_size
         elif action == 1:
-            nextState[1] -= self.step_size
+            next_state.y -= self.step_size
         elif action == 2:
-            nextState[0] -= self.step_size
+            next_state.x -= self.step_size
         elif action == 3:
-            nextState[0] += self.step_size
+            next_state.x += self.step_size
 
-        if self.action_masking:
-            return nextState
+        if self.action_masking or is_position_accessible(self.dungeon, next_state):
+            return next_state
 
-        if self.dungeon.getTileAt(Point(nextState[0], nextState[1]).toCoordinate()).isAccessible():
-            return nextState
-        return self.state
+        return self._internal_state
+
+    def get_external_state(self):
+        """Returns the external representation of the internal state
+
+        Returns:
+            array: Array of state variables
+        """
+        return np.array([self._internal_state.x, self._internal_state.y]).astype(np.float32)
