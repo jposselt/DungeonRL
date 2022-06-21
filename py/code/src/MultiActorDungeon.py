@@ -1,9 +1,11 @@
 import random
 import numpy as np
 from math import sqrt, pow
+from itertools import cycle, islice
 
 from tensorforce import Environment
 from JavaDungeon import Point, Level
+from JavaDungeon import is_position_accessible, get_accessible_coordinates, get_dungeon_bounds, point_as_array
 from collections import namedtuple
 
 class MultiActorDungeon(Environment):
@@ -17,30 +19,19 @@ class MultiActorDungeon(Environment):
         # Dungeon level (java class)
         self.dungeon = dungeon
 
-        # Actor indices
-        self._actor_1_index = 0
-        self._actor_2_index = 1
-        self._actor_indices = [self._actor_1_index, self._actor_2_index]
-
         # State space
         state_indices = [0, 1, 2, 3] # 2D coordinates for two actors
         self._state_indices = np.array(state_indices, np.int32)
         self._state_bounds = self.get_state_bounds(dungeon)
 
         # Coordinates of all accessible tiles
-        self.accessible_coordinates = [
-            tile.getGlobalPosition()
-            for room in dungeon.getRooms()
-            for sub_list in room.getLayout()
-            for tile in sub_list
-            if tile.isAccessible()
-        ]
+        self.accessible_positions = [coordinate.toPoint() for coordinate in get_accessible_coordinates(dungeon)]
 
         # Step size
         self.step_size = 1
 
         # Named tuple for 2d positions
-        self.Point2D = namedtuple('Point2D',['x','y'])
+        #self.Point2D = namedtuple('Point2D',['x','y'])
 
     def states(self):
         return dict(
@@ -60,127 +51,95 @@ class MultiActorDungeon(Environment):
         # Always for multi-actor environments: initialize parallel indices
         self._parallel_indices = np.arange(self.num_actors())
 
-        # Single shared environment logic, plus per-actor perspective
-        start_actor_1 = random.choice(self.accessible_coordinates)
-        start_actor_2 = random.choice(self.accessible_coordinates)
-        while (start_actor_1.equals(start_actor_2)):
-            start_actor_2 = random.choice(self.accessible_coordinates)
-        actor_1_perspective = np.array([start_actor_1.x, start_actor_1.y, start_actor_2.x, start_actor_2.y]).astype(np.float32)
-        actor_2_perspective = np.array([start_actor_2.x, start_actor_2.y, start_actor_1.x, start_actor_1.y]).astype(np.float32)
-        states = np.stack([actor_1_perspective, actor_2_perspective], axis=0)
-        self._states = actor_1_perspective
+        # get random (but different) initial positions for all actors
+        self._internal_state = random.sample(self.accessible_positions, self.num_actors())
 
         # Always for multi-actor environments: return per-actor values
-        return self._parallel_indices.copy(), states
+        return self._parallel_indices.copy(), self.external_state()
 
     def execute(self, actions):
-        # Current and next postion for each actor
-        actor_1_action = actions[self._actor_1_index]
-        actor_2_action = actions[self._actor_2_index]
-        actor_1_position = self.get_current_position(self._actor_1_index)
-        actor_2_position = self.get_current_position(self._actor_2_index)
-        next_actor_1_position = self.get_next_position(actor_1_position, actor_1_action)
-        next_actor_2_position = self.get_next_position(actor_2_position, actor_2_action)
+        current_state = self._internal_state
+        next_state = self.next_state(actions)
+        terminal = self.is_terminal(current_state, actions, next_state)
+        reward = self.reward(current_state, actions, next_state)
 
-        # Single shared environment logic, plus per-actor perspective
-        actor_1_perspective = np.array([next_actor_1_position.x, next_actor_1_position.y, next_actor_2_position.x, next_actor_2_position.y]).astype(np.float32)
-        actor_2_perspective = np.array([next_actor_2_position.x, next_actor_2_position.y, next_actor_1_position.x, next_actor_1_position.y]).astype(np.float32)
-        terminal = np.stack([False, False], axis=0)
-        states = np.stack([actor_1_perspective, actor_2_perspective], axis=0)
+        # update internal state
+        self._internal_state = next_state
 
-        # Reward calculation
-        current_distance = self.straight_line_distance(actor_1_position, actor_2_position)
-        delta_actor_1 = self.straight_line_distance(next_actor_1_position, actor_2_position) - current_distance
-        delta_actor_2 = self.straight_line_distance(next_actor_2_position, actor_1_position) - current_distance
-        r = lambda x : 1 if x > 0 else (-1 if x < 0 else 0)
-        reward = np.stack([r(delta_actor_1), -r(delta_actor_2)], axis=0)
-
-        # Update internal state
-        self._states = actor_1_perspective
-
-        # Always for multi-actor environments: update parallel indices, and return per-actor values
+        # always for multi-actor environments: update parallel indices, and return per-actor values
         self._parallel_indices = self._parallel_indices[~terminal]
-        return self._parallel_indices.copy(), states, terminal, reward
+
+        return self._parallel_indices.copy(), self.external_state(), terminal, reward
+
+    def is_terminal(self, current_state, actions, next_state):
+        # return False for all active actors
+        return np.full_like(self._parallel_indices, False)
+
+    def reward(self, current_state, actions, next_state):
+        # actor indices
+        actor_1 = 0
+        actor_2 = 1
+
+        # distance between actor positions in the current state
+        current_distance = self.straight_line_distance(current_state[actor_1], current_state[actor_2])
+
+        # after action change of distance with respect to the current state
+        new_distances = np.array([
+            self.straight_line_distance(next_state[actor_1], current_state[actor_2]),
+            self.straight_line_distance(next_state[actor_2], current_state[actor_1])
+        ])
+        delta = new_distances - current_distance
+
+        # set reward to -1, 0 or 1 depending on distance change
+        reward_value = lambda x : 1 if x > 0 else (-1 if x < 0 else 0)
+        reward = reward_value(delta)
+
+        return reward
 
     def get_state_bounds(self, dungeon: Level):
-        # Get all accessible tiles
-        accessible_tiles = [tile for room in dungeon.getRooms() for sub_list in room.getLayout() for tile in sub_list if tile.isAccessible()]
-
-        # Get list of x/y coordinates
-        x_coordinates = [coordinate.x for coordinate in [tile.getGlobalPosition() for tile in accessible_tiles]]
-        y_coordinates = [coordinate.y for coordinate in [tile.getGlobalPosition() for tile in accessible_tiles]]
-
-        # Get min/max values
-        x_min = min(x_coordinates)
-        x_max = max(x_coordinates)
-        y_min = min(y_coordinates)
-        y_max = max(y_coordinates)
-
+        x_min, y_min, x_max, y_max = get_dungeon_bounds(dungeon)
         return np.array([[x_min, y_min, x_min, y_min],[x_max, y_max, x_max, y_max]])
 
-    def get_next_position(self, position, action: int):
-        # Actions
-        # 0: go north
-        # 1: go south
-        # 2: go west
-        # 3: go east
-        # 4: do nothing
-        new_x = position.x
-        new_y = position.y
+    def next_position(self, current_position: Point, action: int):
+        # Actions {0: go north, 1: go south, 2: go west, 3: go east, 4: do nothing}
+        next_position = Point(current_position)
         if action == 0:
-            new_y += self.step_size
+            next_position.y += self.step_size
         elif action == 1:
-            new_y -= self.step_size
+            next_position.y -= self.step_size
         elif action == 2:
-            new_x -= self.step_size
+            next_position.x -= self.step_size
         elif action == 3:
-            new_x += self.step_size
+            next_position.x += self.step_size
 
-        if (self.dungeon.getTileAt(Point(new_x, new_y).toCoordinate()).isAccessible()):
-            return self.Point2D(new_x, new_y)
-        return position
+        if is_position_accessible(self.dungeon, next_position):
+            return next_position
+        return current_position
 
-    def get_current_position(self, actor_index: int):
-        if actor_index not in self._actor_indices:
-            raise ValueError(f"{actor_index} is not an allowed actor index. Allowed indices are {self._actor_indices}")
+    def next_state(self, actions: list[int]):
+        return [
+            self.next_position(self._internal_state[i], actions[i])
+            for i in self._parallel_indices
+        ]
 
-        x_index = 2 * actor_index + 0
-        y_index = 2 * actor_index + 1
-        return self.Point2D(self._states[x_index], self._states[y_index])
+    def straight_line_distance(self, source: Point, destination: Point):
+        return sqrt(pow(destination.x - source.x, 2) + pow(destination.y - source.y, 2))
 
-    def straight_line_distance(self, point_1, point_2):
-        return sqrt(pow(point_1.x - point_2.x, 2) + pow(point_1.y - point_2.y, 2))
+    def actor_perspectives(self):
+        cyclic_perspective = lambda x: list(islice(cycle(self._internal_state), x, x + len(self._internal_state)))
+        perspectives = [
+            cyclic_perspective(start)
+            for start in range(len(self._internal_state))
+        ]
+
+        return [
+            np.array(list(map(point_as_array, perspective)), dtype=np.float32).flatten()
+            for perspective in perspectives
+        ]
+
+    def external_state(self):
+        # TODO: Check if stacking is even necessary here. If not actor_perspectives method can be renamed and this part removed.
+        return np.stack(self.actor_perspectives(), axis=0)
 
     def disable_action_masking(self):
         pass
-
-
-if __name__ == '__main__':
-    from JavaDungeon import LevelLoader
-    from tensorforce.agents import Agent
-    from tensorforce.execution import Runner
-
-    dungeon_environment = MultiActorDungeon(
-        dungeon=LevelLoader().loadLevel("../../level/level0.json")
-    )
-
-    environment = Environment.create(
-        environment=dungeon_environment,
-        max_episode_timesteps=100
-    )
-
-    agent = Agent.create(
-        agent="src/Configuration/Agent/multiactor_ppo.json",
-        environment=environment
-    )
-
-    runner = Runner(
-        agent=agent,
-        environment=environment,
-        max_episode_timesteps=100
-    )
-
-    runner.run(num_episodes=10)
-    runner.close()
-    agent.close()
-    environment.close()
