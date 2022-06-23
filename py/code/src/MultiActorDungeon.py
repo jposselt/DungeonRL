@@ -30,9 +30,6 @@ class MultiActorDungeon(Environment):
         # Step size
         self.step_size = 1
 
-        # Named tuple for 2d positions
-        #self.Point2D = namedtuple('Point2D',['x','y'])
-
     def states(self):
         return dict(
             type=float,
@@ -92,9 +89,10 @@ class MultiActorDungeon(Environment):
 
         # set reward to -1, 0 or 1 depending on distance change
         reward_value = lambda x : 1 if x > 0 else (-1 if x < 0 else 0)
-        reward = reward_value(delta)
-
-        return reward
+        return np.array([
+             reward_value(delta[actor_1]),
+            -reward_value(delta[actor_2])
+        ])
 
     def get_state_bounds(self, dungeon: Level):
         x_min, y_min, x_max, y_max = get_dungeon_bounds(dungeon)
