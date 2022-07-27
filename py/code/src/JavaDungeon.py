@@ -62,3 +62,14 @@ def get_dungeon_bounds(dungeon: Level):
     x = [coordinate.x for coordinate in accessible_coordinates]
     y = [coordinate.y for coordinate in accessible_coordinates]
     return min(x), min(y), max(x), max(y)
+
+def point_as_array(point: Point):
+    """Convert a point into an array
+
+    Args:
+        point (Point): a point
+
+    Returns:
+        array: x,y coordinates as array
+    """
+    return [point.x, point.y]
