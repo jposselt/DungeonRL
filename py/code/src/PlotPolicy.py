@@ -48,8 +48,8 @@ def EvaluateModel(dungeon, environment, agent):
     StateAction = namedtuple("StateAction", ["xPos", "yPos", "action"])
     state_action_list = []
 
-    for coordinate in dungeon.start_coords:
-        states = environment.setState(Point(coordinate.x, coordinate.y))
+    for coordinate in dungeon.start_positions:
+        states = environment.set_state(Point(coordinate.x, coordinate.y))
         internals = agent.initial_internals()
 
         actions, internals = agent.act(
