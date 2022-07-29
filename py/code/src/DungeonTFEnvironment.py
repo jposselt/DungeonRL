@@ -118,7 +118,7 @@ class DungeonTFEnvironment(Environment):
             (true=action is possible, false=action is not possible). If action masking is disabled all values are true.
         """
         if not self.action_masking:
-            return np.full(self.actions['num_values'], True)
+            return np.full(self.actions()['num_values'], True)
 
         step_north = Point(self._internal_state.x, self._internal_state.y + self.step_size)
         step_south = Point(self._internal_state.x, self._internal_state.y - self.step_size)
