@@ -124,6 +124,17 @@ class MultiActorDungeon(Environment):
         return sqrt(pow(destination.x - source.x, 2) + pow(destination.y - source.y, 2))
 
     def actor_perspectives(self):
+        """Returns the external state from each actors perspective.
+
+        Each actors perspective is a representation of the evironments state consisting of a list of
+        x and y coordinates. The perspective of one actor is such that its own x and y coordinates are
+        first in the list followed be the other actors coordinates. In general coordinate values are
+        ordered cyclical, meaning for three actor the perspective of the third would be
+        [x_3, y_3, x_1, y_1, x_2, y_2].
+
+        Returns:
+            list: List of external states
+        """
         cyclic_perspective = lambda x: list(islice(cycle(self._internal_state), x, x + len(self._internal_state)))
         perspectives = [
             cyclic_perspective(start)
